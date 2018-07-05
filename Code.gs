@@ -1,5 +1,19 @@
-var ENDPOINT = "https://us-central1-playground-201415.cloudfunctions.net/pealim-scraper";
+function onOpen(e) {
+  // no-op
+}
 
+function onInstall(e) {
+  // no-op
+}
+
+/**
+ * A function that takes an English verb in infinitive form and outputs
+ * a table of its Hebrew conjugations.
+ *
+ * @param {String} englishInfinitive The English verb in infinitive form.
+ * @return {String[]} The Hebrew conjugations.
+ * @customfunction
+ */
 function translateAndConjugate(englishInfinitive) {
   const cache = CacheService.getScriptCache();
   const cacheKey = "ENGLISH:" + englishInfinitive;
@@ -9,7 +23,7 @@ function translateAndConjugate(englishInfinitive) {
     return JSON.parse(cachedResponse);
   } else {
     const hebrewInfinitive = LanguageApp.translate(englishInfinitive, "en", "he");
-    const table = _conjugate(hebrewInfinitive, true);
+    const table = conjugate_(hebrewInfinitive, true);
     
     // cache result
     cache.put(cacheKey, JSON.stringify(table));
@@ -17,11 +31,19 @@ function translateAndConjugate(englishInfinitive) {
   }
 }
 
+/**
+ * A function that takes a Hebrew verb in infinitive form and outputs
+ * a table of its conjugations.
+ *
+ * @param {String} hebrewInfinitive The Hebrew verb in infinitive form.
+ * @return {String[]} The Hebrew conjugations.
+ * @customfunction
+ */
 function conjugate(hebrewInfinitive) {
-  return _conjugate(hebrewInfinitive, false)
+  return conjugate_(hebrewInfinitive, false)
 }
 
-function _conjugate(hebrewInfinitive, printInfinitive) {
+function conjugate_(hebrewInfinitive, printInfinitive) {
   const cache = CacheService.getScriptCache();
   const cacheKey = "HEBREW:" + hebrewInfinitive + "-INF:" + printInfinitive;
   const cachedResponse = cache.get(cacheKey);
@@ -29,14 +51,14 @@ function _conjugate(hebrewInfinitive, printInfinitive) {
     console.log("Found cached response for: " + cacheKey);
     return JSON.parse(cachedResponse);
   } else {
-    const table = _doConjugate(hebrewInfinitive, printInfinitive);
+    const table = doConjugate_(hebrewInfinitive, printInfinitive);
     // cache result
     cache.put(cacheKey, JSON.stringify(table));
     return table;
   }
 }
 
-function _doConjugate(hebrewInfinitive, printInfinitive) {
+function doConjugate_(hebrewInfinitive, printInfinitive) {
   console.log("Invoking endpoint for: " + hebrewInfinitive);
   const body = {'query': hebrewInfinitive};
   const options = {
@@ -44,50 +66,51 @@ function _doConjugate(hebrewInfinitive, printInfinitive) {
     'contentType': 'application/json',
     'payload' : JSON.stringify(body)
   };
-  const response = UrlFetchApp.fetch(ENDPOINT, options);
+  const url = PropertiesService.getScriptProperties().getProperty("ENDPOINT");
+  const response = UrlFetchApp.fetch(url, options);
   const responseText = response.getContentText();
   const conjugations = JSON.parse(responseText);
   console.log(conjugations);
   
   const present = [[]];
-  _appendConjugationToArray(present, conjugations.present.masculineSingular)
-  _appendConjugationToArray(present, conjugations.present.feminineSingular)
-  _appendConjugationToArray(present, conjugations.present.masculinePlural)
-  _appendConjugationToArray(present, conjugations.present.femininePlural)
+  appendConjugationToArray_(present, conjugations.present.masculineSingular)
+  appendConjugationToArray_(present, conjugations.present.feminineSingular)
+  appendConjugationToArray_(present, conjugations.present.masculinePlural)
+  appendConjugationToArray_(present, conjugations.present.femininePlural)
   
   const past1st = [[]];
-  _appendConjugationToArray(past1st, conjugations.past.firstPersonSingular)
-  _appendConjugationToArray(past1st, conjugations.past.firstPersonPlural)
+  appendConjugationToArray_(past1st, conjugations.past.firstPersonSingular)
+  appendConjugationToArray_(past1st, conjugations.past.firstPersonPlural)
   
   const past2nd = [[]];
-  _appendConjugationToArray(past2nd, conjugations.past.secondPersonMasculineSingular)
-  _appendConjugationToArray(past2nd, conjugations.past.secondPersonFeminineSingular)
-  _appendConjugationToArray(past2nd, conjugations.past.secondPersonMasculinePlural)
-  _appendConjugationToArray(past2nd, conjugations.past.secondPersonFemininePlural)
+  appendConjugationToArray_(past2nd, conjugations.past.secondPersonMasculineSingular)
+  appendConjugationToArray_(past2nd, conjugations.past.secondPersonFeminineSingular)
+  appendConjugationToArray_(past2nd, conjugations.past.secondPersonMasculinePlural)
+  appendConjugationToArray_(past2nd, conjugations.past.secondPersonFemininePlural)
   
   const past3rd = [[]];
-  _appendConjugationToArray(past3rd, conjugations.past.thirdPersonMasculineSingular)
-  _appendConjugationToArray(past3rd, conjugations.past.thirdPersonFeminineSingular)
-  _appendConjugationToArray(past3rd, conjugations.past.thirdPersonPlural)
+  appendConjugationToArray_(past3rd, conjugations.past.thirdPersonMasculineSingular)
+  appendConjugationToArray_(past3rd, conjugations.past.thirdPersonFeminineSingular)
+  appendConjugationToArray_(past3rd, conjugations.past.thirdPersonPlural)
   
   const future1st = [[]];
-  _appendConjugationToArray(future1st, conjugations.future.firstPersonSingular)
-  _appendConjugationToArray(future1st, conjugations.future.firstPersonPlural)
+  appendConjugationToArray_(future1st, conjugations.future.firstPersonSingular)
+  appendConjugationToArray_(future1st, conjugations.future.firstPersonPlural)
   
   const future2nd = [[]];
-  _appendConjugationToArray(future2nd, conjugations.future.secondPersonMasculineSingular)
-  _appendConjugationToArray(future2nd, conjugations.future.secondPersonFeminineSingular)
-  _appendConjugationToArray(future2nd, conjugations.future.secondPersonMasculinePlural)
+  appendConjugationToArray_(future2nd, conjugations.future.secondPersonMasculineSingular)
+  appendConjugationToArray_(future2nd, conjugations.future.secondPersonFeminineSingular)
+  appendConjugationToArray_(future2nd, conjugations.future.secondPersonMasculinePlural)
   
   const future3rd = [[]];
-  _appendConjugationToArray(future3rd, conjugations.future.thirdPersonMasculineSingular)
-  _appendConjugationToArray(future3rd, conjugations.future.thirdPersonFeminineSingular)
-  _appendConjugationToArray(future3rd, conjugations.future.thirdPersonMasculinePlural)
+  appendConjugationToArray_(future3rd, conjugations.future.thirdPersonMasculineSingular)
+  appendConjugationToArray_(future3rd, conjugations.future.thirdPersonFeminineSingular)
+  appendConjugationToArray_(future3rd, conjugations.future.thirdPersonMasculinePlural)
   
   const infinitive = [];
   if (printInfinitive) {
     infinitive.push([])
-    _appendConjugationToArray(infinitive, conjugations.infinitive)
+    appendConjugationToArray_(infinitive, conjugations.infinitive)
   }      
   
   return infinitive
@@ -96,7 +119,7 @@ function _doConjugate(hebrewInfinitive, printInfinitive) {
   .concat(future1st).concat(future2nd).concat(future3rd);
 }
 
-function _appendConjugationToArray(arr, c) {
+function appendConjugationToArray_(arr, c) {
   arr[0].push(c.hebrew);
   //arr[1].push(c.transliteration);
 }
